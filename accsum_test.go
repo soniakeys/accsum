@@ -56,3 +56,9 @@ func ExampleAccSum() {
 	// AccSum:   1.0000000000147541e+20
 	// Triangle:             1475412681
 }
+
+func ExampleCond() {
+	p := []float64{1e100, 1e-100, -1e100}
+	fmt.Println(accsum.Cond(p))
+	// Output: 2e+200
+}

@@ -130,6 +130,8 @@ func transform(p []float64) (τ1, τ2 float64) {
 }
 
 // AccSum returns an accurate sum of values in p.
+//
+// AccSum is destructive on p.
 func AccSum(p []float64) float64 {
 	τ1, τ2 := transform(p)
 	sum := 0.
@@ -137,4 +139,16 @@ func AccSum(p []float64) float64 {
 		sum += pi
 	}
 	return sum + τ2 + τ1 // order important
+}
+
+// Cond computes the condition number of the summation of p.
+//
+// The contents of p are not modified.
+func Cond(p []float64) float64 {
+	c := append([]float64{}, p...)
+	absSum := math.Abs(AccSum(c))
+	for i, x := range p {
+		c[i] = math.Abs(x)
+	}
+	return AccSum(c) / absSum
 }
