@@ -17,6 +17,9 @@ var (
 	eps    = math.Ldexp(1, -P)
 	invEps = math.Ldexp(1, P)
 
+	// 1/2 error unit
+	u = math.Ldexp(1, -P-1)
+
 	// eta is the "underflow unit," the smallest positive subnormal number.
 	eta = math.Ldexp(1, 2-EMax-P)
 
@@ -73,8 +76,8 @@ func extractScalar(σ, p float64) (q, pʹ float64) {
 
 // extractSlice splits elements of p relative to σ.
 //
-// As with extractScalar, σ must be an integral power of 2.  ExtractSlice
-// calls ExtractScalar on each element of p.  It replaces each element of p
+// As with extractScalar, σ must be an integral power of 2.  extractSlice
+// calls extractScalar on each element of p.  It replaces each element of p
 // with the high order part q, and sums all remainders pʹ to the return
 // value τ.
 //
@@ -105,23 +108,24 @@ func transform(p []float64) (τ1, τ2 float64) {
 		return
 	}
 	Ms := nextPowerTwo(float64(len(p) + 2))
-	σʹ := Ms * nextPowerTwo(μ)
-	if math.IsInf(σʹ, 0) {
-		return σʹ, σʹ
+	σ := Ms * nextPowerTwo(μ) // "extraction unit"
+	if math.IsInf(σ, 0) {
+		return σ, σ
 	}
-	tʹ := 0.
-	for {
-		t := tʹ
-		σ := σʹ
+	ϕ := Ms * u  // "factor to decrease σ"
+	_Φ := Ms * ϕ // "stopping criterion"
+
+	for t := 0.; ; {
 		τ := extractSlice(σ, p)
-		tʹ = t + τ
-		if tʹ == 0 {
-			return transform(p)
-		}
-		σʹ = Ms * eps * σ
-		if math.Abs(tʹ) >= Ms*σʹ || σ <= minPos {
+		τ1 := t + τ
+		if math.Abs(τ1) >= _Φ*σ || σ <= minPos {
 			return FastTwoSum(t, τ)
 		}
+		t = τ1
+		if t == 0 {
+			return transform(p)
+		}
+		σ *= ϕ
 	}
 }
 
@@ -129,8 +133,8 @@ func transform(p []float64) (τ1, τ2 float64) {
 func AccSum(p []float64) float64 {
 	τ1, τ2 := transform(p)
 	sum := 0.
-	for _, pi := range p {
+	for _, pi := range p { // order not important
 		sum += pi
 	}
-	return sum + τ2 + τ1
+	return sum + τ2 + τ1 // order important
 }
