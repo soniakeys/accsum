@@ -3,7 +3,10 @@
 
 package accsum
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 // Defining constants for IEEE 754 binary64, the Go float64 type.
 const (
@@ -25,6 +28,9 @@ var (
 
 	// minPos is the smallest positive normalized number.
 	minPos = math.Ldexp(1, 1-EMax)
+
+	// PrecSum maximum length of argument p.
+	nMax = 1<<26 - 2
 )
 
 // TwoSum computes an error-free sum of two float64s.
@@ -132,6 +138,8 @@ func transform(p []float64) (τ1, τ2 float64) {
 // AccSum returns an accurate sum of values in p.
 //
 // AccSum is destructive on p.
+//
+// Result is a faithful rounding of the sum of values in p.
 func AccSum(p []float64) float64 {
 	τ1, τ2 := transform(p)
 	sum := 0.
@@ -142,8 +150,6 @@ func AccSum(p []float64) float64 {
 }
 
 // Cond computes the condition number of the summation of p.
-//
-// The contents of p are not modified.
 func Cond(p []float64) float64 {
 	c := append([]float64{}, p...)
 	absSum := math.Abs(AccSum(c))
@@ -151,4 +157,73 @@ func Cond(p []float64) float64 {
 		c[i] = math.Abs(x)
 	}
 	return AccSum(c) / absSum
+}
+
+// PrecSum returns an accurate sum of values in p.
+//
+// Result is a faithful rounding of the sum or else has relative error <=
+// 2^(-53*k) * Cond(p).
+func PrecSum(p []float64, K int) float64 {
+	switch {
+	case len(p) == 0:
+		return 0.
+	case len(p) > nMax:
+		panic(fmt.Sprintf("len(p) = %d exceeds limit, %d", len(p), nMax))
+	}
+	μ := math.Abs(p[0])
+	for _, x := range p[1:] {
+		if a := math.Abs(x); x > μ {
+			μ = a
+		}
+	}
+	μ /= 1 - float64(len(p))*2*eps
+	if μ == 0 {
+		return 0.
+	}
+	σ0 := nextPowerTwo(μ)
+	if math.IsInf(σ0, 0) {
+		return σ0
+	}
+	Ms := nextPowerTwo(float64(len(p) + 2))
+	M := math.Log2(Ms)
+	ϕ := Ms * u
+	// len(σ) is L in paper and reference code.  also, paper and reference code
+	// seem to allocate and then compute an extra σ element that is never used.
+	σ := make([]float64,
+		int(math.Ceil((float64(K)*math.Log2(u)-2)/(math.Log2(u)+M))-1))
+	for k := 0; ; {
+		if σ0 <= minPos {
+			σ = σ[:k]
+			break
+		}
+		σ[k] = σ0
+		k++
+		if k == len(σ) {
+			break
+		}
+		σ0 *= ϕ
+	}
+	if len(σ) == 0 {
+		sum := 0.
+		for _, x := range p {
+			sum += x
+		}
+		return sum
+	}
+	var q, sum float64
+	τ := make([]float64, len(σ))
+	for _, π := range p {
+		for k, σk := range σ {
+			q, π = extractScalar(σk, π)
+			τ[k] += q
+		}
+		sum += π
+	}
+	π := τ[0]
+	e := 0.
+	for _, τk := range τ[1:] {
+		π, q = FastTwoSum(π, τk)
+		e += q
+	}
+	return sum + e + π
 }

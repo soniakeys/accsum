@@ -62,3 +62,23 @@ func ExampleCond() {
 	fmt.Println(accsum.Cond(p))
 	// Output: 2e+200
 }
+
+func ExamplePrecSum() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	s := 0.
+	for _, x := range p {
+		s += x
+	}
+	fmt.Printf("Simple:   %.16e\n", s)
+	fmt.Printf("PrecSum:  %.16e\n", accsum.PrecSum(p, 22))
+	fmt.Println("Triangle:            ", n*(n+1)/2)
+	// Output:
+	// Simple:   1.0000000000146203e+20
+	// PrecSum:  1.0000000000147541e+20
+	// Triangle:             1475412681
+}
