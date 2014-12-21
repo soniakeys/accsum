@@ -149,14 +149,16 @@ func AccSum(p []float64) float64 {
 	return sum + τ2 + τ1 // order important
 }
 
-// Cond computes the condition number of the summation of p.
-func Cond(p []float64) float64 {
-	c := append([]float64{}, p...)
-	absSum := math.Abs(AccSum(c))
-	for i, x := range p {
+// Cond computes the condition number of summation function over slice s.
+//
+// Cond is not destructive on s even if f is destructive on its argument.
+func Cond(f func([]float64) float64, s []float64) float64 {
+	c := append([]float64{}, s...)
+	absSum := math.Abs(f(c))
+	for i, x := range s {
 		c[i] = math.Abs(x)
 	}
-	return AccSum(c) / absSum
+	return f(c) / absSum
 }
 
 // PrecSum returns an accurate sum of values in p.
@@ -226,4 +228,38 @@ func PrecSum(p []float64, K int) float64 {
 		e += q
 	}
 	return sum + e + π
+}
+
+// CompSum returns a compensated sum of values in p.
+//
+// The algoithm is Kahan summation.
+//
+// 4 * len(p) floating point operations.
+func CompSum(p []float64) float64 {
+	var s, c float64
+	for _, x := range p {
+		y := x - c
+		t := s + y
+		c = t - s - y
+		s = t
+	}
+	return s
+}
+
+// BalSum computes an accurate sum with a "balancing" algorithm.
+//
+// This is the Kahan-Babuška-Neumaier algorithm.
+func BalSum(p []float64) float64 {
+	s := p[0]
+	c := 0.
+	for _, x := range p[1:] {
+		t := s + x
+		if math.Abs(s) >= math.Abs(x) {
+			c += s - t + x
+		} else {
+			c += x - t + s
+		}
+		s = t
+	}
+	return s + c
 }

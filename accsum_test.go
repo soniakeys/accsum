@@ -59,7 +59,7 @@ func ExampleAccSum() {
 
 func ExampleCond() {
 	p := []float64{1e100, 1e-100, -1e100}
-	fmt.Println(accsum.Cond(p))
+	fmt.Println(accsum.Cond(accsum.BalSum, p))
 	// Output: 2e+200
 }
 
@@ -75,10 +75,50 @@ func ExamplePrecSum() {
 		s += x
 	}
 	fmt.Printf("Simple:   %.16e\n", s)
-	fmt.Printf("PrecSum:  %.16e\n", accsum.PrecSum(p, 22))
+	fmt.Printf("PrecSum:  %.16e\n", accsum.PrecSum(p, 2))
 	fmt.Println("Triangle:            ", n*(n+1)/2)
 	// Output:
 	// Simple:   1.0000000000146203e+20
 	// PrecSum:  1.0000000000147541e+20
+	// Triangle:             1475412681
+}
+
+func ExampleCompSum() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	s := 0.
+	for _, x := range p {
+		s += x
+	}
+	fmt.Printf("Simple:   %.16e\n", s)
+	fmt.Printf("CompSum:  %.16e\n", accsum.CompSum(p))
+	fmt.Println("Triangle:            ", n*(n+1)/2)
+	// Output:
+	// Simple:   1.0000000000146203e+20
+	// CompSum:  1.0000000000147541e+20
+	// Triangle:             1475412681
+}
+
+func ExampleBalSum() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	s := 0.
+	for _, x := range p {
+		s += x
+	}
+	fmt.Printf("Simple:   %.16e\n", s)
+	fmt.Printf("BalSum:   %.16e\n", accsum.BalSum(p))
+	fmt.Println("Triangle:            ", n*(n+1)/2)
+	// Output:
+	// Simple:   1.0000000000146203e+20
+	// BalSum:   1.0000000000147541e+20
 	// Triangle:             1475412681
 }
