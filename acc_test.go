@@ -5,9 +5,24 @@ package accsum_test
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/soniakeys/accsum"
 )
+
+func ExampleFastTwoSum() {
+	a, b := .2, .1
+	x, y := accsum.FastTwoSum(a, b)
+	fmt.Printf("a: % .20f\n", a)
+	fmt.Printf("b: % .20f\n", b)
+	fmt.Printf("x: % .20f\n", x)
+	fmt.Printf("y: % .20f\n", y)
+	// Output:
+	// a:  0.20000000000000001110
+	// b:  0.10000000000000000555
+	// x:  0.30000000000000004441
+	// y: -0.00000000000000002776
+}
 
 func ExampleTwoSum() {
 	a, b := .1, .2
@@ -23,18 +38,25 @@ func ExampleTwoSum() {
 	// y: -0.00000000000000002776
 }
 
-func ExampleFastTwoSum() {
-	a, b := .2, .1
-	x, y := accsum.FastTwoSum(a, b)
-	fmt.Printf("a: % .20f\n", a)
-	fmt.Printf("b: % .20f\n", b)
-	fmt.Printf("x: % .20f\n", x)
-	fmt.Printf("y: % .20f\n", y)
+func ExampleSplit() {
+	a := math.Pi
+	x, y := accsum.Split(a)
+	fmt.Printf("%064b\n", math.Float64bits(a))
+	fmt.Printf("%064b\n", math.Float64bits(x+y))
+	fmt.Printf("%064b\n", math.Float64bits(x))
+	fmt.Printf("%064b\n", math.Float64bits(y))
 	// Output:
-	// a:  0.20000000000000001110
-	// b:  0.10000000000000000555
-	// x:  0.30000000000000004441
-	// y: -0.00000000000000002776
+	// 0100000000001001001000011111101101010100010001000010110100011000
+	// 0100000000001001001000011111101101010100010001000010110100011000
+	// 0100000000001001001000011111101101011000000000000000000000000000
+	// 1011111001011101110111101001011101000000000000000000000000000000
+}
+
+func ExampleTwoProduct() {
+	a := 1e10 + 1
+	b := 1e6 + 1
+	fmt.Println(accsum.TwoProduct(a, b))
+	// Output: 1.0000010001e+16 1
 }
 
 func ExampleAccSum() {

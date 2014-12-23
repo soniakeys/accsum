@@ -33,6 +33,31 @@ var (
 	nMax = 1<<26 - 2
 )
 
+// Section:  Algorithms of "Accurate Sum and Dot Product",
+// http://www.ti3.tu-harburg.de/paper/rump/OgRuOi05.pdf
+//
+// FastTwoSum (1.1)
+// TwoSum (3.1)
+// Split (3.2)
+// TwoProduct (3.3)
+
+// FastTwoSum computes an error-free sum of two float64s, with conditions on
+// the relative magnitudes.
+//
+// Error-free means the result x is floating-point sum a+b, and y is the
+// floating-point error such that x+y exactly equals a+b.
+//
+// Results are accurate when |b| <= |a|, but are also still accurate as
+// long as no trailing nonzero bit of a is smaller than the least significant
+// bit of b.
+//
+// Dekker algorithm, 3 floating point operations.
+func FastTwoSum(a, b float64) (x, y float64) {
+	x = a + b
+	y = a - x + b
+	return
+}
+
 // TwoSum computes an error-free sum of two float64s.
 //
 // Knuth algorithm, 6 floating point operations.
@@ -45,19 +70,29 @@ func TwoSum(a, b float64) (x, y float64) {
 	return
 }
 
-// FastTwoSum computes an error-free sum of two float64s, with conditions on
-// the relative magnitudes.
+var splitFactor = math.Ldexp(1, 27) + 1
+
+// Split splits a into x, y such that x + y = a and both x and y need at most
+// 26 bits in the significand.
 //
-// Dekker algorithm, 3 floating point operations.
+// Requires 4 floating-point operations (multiplication and subtraction.)
+func Split(a float64) (x, y float64) {
+	c := splitFactor * a
+	x = c - (c - a)
+	y = a - x
+	return
+}
+
+// TwoSum computes an error-free product of two float64s.
 //
-// Results are accurate when |b| <= |a|, but are also still accurate as
-// long as no trailing nonzero bit of a is smaller than the least significant
-// bit of b.
+// Result x is a*b, y is the error such that x+y exactly equals a times b.
 //
-// Result x is a+b, y is the error such that x+y exactly equals a+b.
-func FastTwoSum(a, b float64) (x, y float64) {
-	x = a + b
-	y = a - x + b
+// 17 floating point operations (multiplication and subtraction.)
+func TwoProduct(a, b float64) (x, y float64) {
+	x = a * b
+	a1, a2 := Split(a)
+	b1, b2 := Split(b)
+	y = a2*b2 - (x - a1*b1 - a2*b1 - a1*b2)
 	return
 }
 
