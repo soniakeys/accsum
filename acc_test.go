@@ -5,7 +5,6 @@ package accsum_test
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/soniakeys/accsum"
 )
@@ -38,25 +37,78 @@ func ExampleTwoSum() {
 	// y: -0.00000000000000002776
 }
 
-func ExampleSplit() {
-	a := math.Pi
-	x, y := accsum.Split(a)
-	fmt.Printf("%064b\n", math.Float64bits(a))
-	fmt.Printf("%064b\n", math.Float64bits(x+y))
-	fmt.Printf("%064b\n", math.Float64bits(x))
-	fmt.Printf("%064b\n", math.Float64bits(y))
-	// Output:
-	// 0100000000001001001000011111101101010100010001000010110100011000
-	// 0100000000001001001000011111101101010100010001000010110100011000
-	// 0100000000001001001000011111101101011000000000000000000000000000
-	// 1011111001011101110111101001011101000000000000000000000000000000
-}
-
 func ExampleTwoProduct() {
 	a := 1e10 + 1
 	b := 1e6 + 1
 	fmt.Println(accsum.TwoProduct(a, b))
 	// Output: 1.0000010001e+16 1
+}
+
+func ExampleSum2() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	fmt.Printf("Simple:   %.16e\n", accsum.Sum(p))
+	fmt.Printf("Sum2:     %.16e\n", accsum.Sum2(p))
+	fmt.Println("Triangle:            ", n*(n+1)/2)
+	// Output:
+	// Simple:   1.0000000000146203e+20
+	// Sum2:     1.0000000000147541e+20
+	// Triangle:             1475412681
+}
+
+func ExampleSumK() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	fmt.Printf("Simple:   %.16e\n", accsum.Sum(p))
+	fmt.Printf("SumK:     %.16e\n", accsum.SumK(p, 2))
+	fmt.Println("Triangle:            ", n*(n+1)/2)
+	// Output:
+	// Simple:   1.0000000000146203e+20
+	// SumK:     1.0000000000147541e+20
+	// Triangle:             1475412681
+}
+
+func ExampleDot2() {
+	n := 4321
+	x := make([]float64, n+1)
+	for i := range x {
+		x[i] = float64(i)
+	}
+	x[0] = 1e11
+	fmt.Printf("Simple:   %.16e\n", accsum.Dot(x, x))
+	fmt.Printf("Dot2:     %.16e\n", accsum.Dot2(x, x))
+	fmt.Println("Square triangle:      ", n*(n+1)*(2*n+1)/6)
+	// Output:
+	// Simple:   1.0000000000026734e+22
+	// Dot2:     1.0000000000026902e+22
+	// Square triangle:       26901858961
+}
+
+func ExampleDot2Err() {
+	n := 4321
+	x := make([]float64, n+1)
+	for i := range x {
+		x[i] = float64(i)
+	}
+	x[0] = 1e11
+	fmt.Printf("Simple:   %.16e\n", accsum.Dot(x, x))
+	dot, err := accsum.Dot2Err(x, x)
+	fmt.Printf("Dot2:     %.16e\n", dot)
+	fmt.Printf("Square triangle:   %15d\n", n*(n+1)*(2*n+1)/6)
+	fmt.Printf("Dot2Err:           %15.0f\n", err)
+	// Output:
+	// Simple:   1.0000000000026734e+22
+	// Dot2:     1.0000000000026902e+22
+	// Square triangle:       26901858961
+	// Dot2Err:                   1110223
 }
 
 func ExampleAccSum() {
@@ -92,37 +144,5 @@ func ExamplePrecSum() {
 	// Output:
 	// Simple:   1.0000000000146203e+20
 	// PrecSum:  1.0000000000147541e+20
-	// Triangle:             1475412681
-}
-
-func ExampleSum2() {
-	n := 54321
-	p := make([]float64, n+1)
-	for i := range p {
-		p[i] = float64(i)
-	}
-	p[0] = 1e20
-	fmt.Printf("Simple:   %.16e\n", accsum.Sum(p))
-	fmt.Printf("Sum2:     %.16e\n", accsum.Sum2(p))
-	fmt.Println("Triangle:            ", n*(n+1)/2)
-	// Output:
-	// Simple:   1.0000000000146203e+20
-	// Sum2:     1.0000000000147541e+20
-	// Triangle:             1475412681
-}
-
-func ExampleXSum() {
-	n := 54321
-	p := make([]float64, n+1)
-	for i := range p {
-		p[i] = float64(i)
-	}
-	p[0] = 1e20
-	fmt.Printf("Simple:   %.16e\n", accsum.Sum(p))
-	fmt.Printf("XSum:     %.16e\n", accsum.XSum(p))
-	fmt.Println("Triangle:            ", n*(n+1)/2)
-	// Output:
-	// Simple:   1.0000000000146203e+20
-	// XSum:     1.0000000000147541e+20
 	// Triangle:             1475412681
 }

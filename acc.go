@@ -33,13 +33,17 @@ var (
 	nMax = 1<<26 - 2
 )
 
-// Section:  Algorithms of "Accurate Sum and Dot Product",
+// Section:  "Algorithms of "Accurate Sum and Dot Product",
 // http://www.ti3.tu-harburg.de/paper/rump/OgRuOi05.pdf
 //
 // FastTwoSum (1.1)
 // TwoSum (3.1)
-// Split (3.2)
+// split (3.2)
 // TwoProduct (3.3)
+// Sum2 (4.1, 4.4)
+// vecSum (4.3)
+// SumK (4.8)
+// Dot2 (5.3)
 
 // FastTwoSum computes an error-free sum of two float64s, with conditions on
 // the relative magnitudes.
@@ -72,11 +76,11 @@ func TwoSum(a, b float64) (x, y float64) {
 
 var splitFactor = math.Ldexp(1, 27) + 1
 
-// Split splits a into x, y such that x + y = a and both x and y need at most
+// split splits a into x, y such that x + y = a and both x and y need at most
 // 26 bits in the significand.
 //
 // Requires 4 floating-point operations (multiplication and subtraction.)
-func Split(a float64) (x, y float64) {
+func split(a float64) (x, y float64) {
 	c := splitFactor * a
 	x = c - (c - a)
 	y = a - x
@@ -90,9 +94,77 @@ func Split(a float64) (x, y float64) {
 // 17 floating point operations (multiplication and subtraction.)
 func TwoProduct(a, b float64) (x, y float64) {
 	x = a * b
-	a1, a2 := Split(a)
-	b1, b2 := Split(b)
+	a1, a2 := split(a)
+	b1, b2 := split(b)
 	y = a2*b2 - (x - a1*b1 - a2*b1 - a1*b2)
+	return
+}
+
+// Sum2 returns a sum of values in p as if computed in twice the precision
+// of a float64.
+func Sum2(p []float64) float64 {
+	if len(p) == 0 {
+		return 0.
+	}
+	s := p[0]
+	var e, y float64
+	for _, x := range p[1:] {
+		s, y = TwoSum(s, x)
+		e += y
+	}
+	return s + e
+}
+
+func vecSum(p []float64) {
+	if len(p) < 2 {
+		return
+	}
+	s := p[0]
+	for i, x := range p[1:] {
+		s, p[i] = TwoSum(s, x)
+	}
+	p[len(p)-1] = s
+}
+
+// SumK returns a sum of values in p, as if computed in k-fold precision of
+// a float64.
+func SumK(p []float64, k int) float64 {
+	for ; k > 1; k-- {
+		vecSum(p)
+	}
+	return Sum(p)
+}
+
+func Dot2(x, y []float64) float64 {
+	if len(x) == 0 {
+		return 0
+	}
+	q := 0.
+	p, s := TwoProduct(x[0], y[0])
+	for i := 1; i < len(x); i++ {
+		h, r := TwoProduct(x[i], y[i])
+		p, q = TwoSum(p, h)
+		s += q + r
+	}
+	return p + s
+}
+
+func Dot2Err(x, y []float64) (dot, eb float64) {
+	p, s := TwoProduct(x[0], y[0])
+	e := math.Abs(s)
+	q := 0.
+	for i := 1; i < len(x); i++ {
+		h, r := TwoProduct(x[i], y[i])
+		p, q = TwoSum(p, h)
+		t := q + r
+		s += t
+		e += math.Abs(t)
+	}
+	dot = p + s
+	n := float64(len(x))
+	δ := n * eps / (1 - 2*n*eps)
+	α := eps*math.Abs(dot) + (δ*e + 3*eta/eps)
+	eb = α / (1 - 2*eps)
 	return
 }
 
@@ -251,27 +323,4 @@ func PrecSum(p []float64, K int) float64 {
 		e += q
 	}
 	return sum + e + π
-}
-
-func Sum2(p []float64) float64 {
-	if len(p) == 0 {
-		return 0.
-	}
-	e := 0.
-	s := p[0]
-	for _, π := range p[1:] {
-		x, y := TwoSum(π, s)
-		e += y
-		s = x
-	}
-	return s + e
-}
-
-func XSum(p []float64) float64 {
-	var s, t float64
-	for _, π := range p {
-		t1, t2 := TwoSum(s, π)
-		s, t = FastTwoSum(t1, t2+t)
-	}
-	return s + t
 }

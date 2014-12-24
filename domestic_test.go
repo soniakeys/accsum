@@ -5,12 +5,36 @@ package accsum
 
 import (
 	"math"
+	"math/rand"
 	"reflect"
+	"strings"
 	"testing"
 )
 
-// test values here seem reasonable but were just obtained by running the
-// tested functions.  there's no independent verification here.
+func TestSplit(t *testing.T) {
+	for i := 0; i < 1000; i++ {
+		a := rand.ExpFloat64()
+		if rand.Intn(2) == 0 {
+			a = -a
+		}
+		x, y := split(a)
+		if x+y != a {
+			t.Fatalf(`split(%g)
+results sum to       %g
+want original value, %g`, a, x+y, a)
+		}
+		bx := math.Float64bits(x)
+		by := math.Float64bits(y)
+		// test low 26 bits of significand
+		if bx&(1<<27-1) != 0 || by&(1<<27-1) != 0 {
+			t.Fatalf(`split(%g) =
+%064b
+%064b
+want 26 zero bits:
+%s%s`, a, bx, by, strings.Repeat(".", 64-26), strings.Repeat("0", 26))
+		}
+	}
+}
 
 func TestNextPowerTwo(t *testing.T) {
 	for _, tc := range []struct{ a, np2 float64 }{
@@ -41,8 +65,9 @@ func TestExtractScalar(t *testing.T) {
 		σ := math.Ldexp(1, tc.exp) // 2^exp
 		gotQ, gotPʹ := extractScalar(σ, math.Pi)
 		if gotQ != tc.q || gotPʹ != tc.pʹ {
-			t.Fatalf("extractScalar(2^%d) = %g, %g\nwant %g, %g",
-				tc.exp, gotQ, gotPʹ, tc.q, tc.pʹ)
+			t.Fatalf(`extractScalar(2^%d)
+results: %g, %g
+want:    %g, %g`, tc.exp, gotQ, gotPʹ, tc.q, tc.pʹ)
 		}
 	}
 }
