@@ -6,6 +6,7 @@ package accsum
 import (
 	"fmt"
 	"math"
+	"math/rand"
 )
 
 // Defining constants for IEEE 754 binary64, the Go float64 type.
@@ -43,7 +44,10 @@ var (
 // Sum2 (4.1, 4.4)
 // vecSum (4.3)
 // SumK (4.8)
+// SumKVert (4.12)
 // Dot2 (5.3)
+// Dot2Err (5.8)
+// DotK (5.10)
 
 // FastTwoSum computes an error-free sum of two float64s, with conditions on
 // the relative magnitudes.
@@ -128,11 +132,41 @@ func vecSum(p []float64) {
 
 // SumK returns a sum of values in p, as if computed in k-fold precision of
 // a float64.
-func SumK(p []float64, k int) float64 {
-	for ; k > 1; k-- {
+//
+// SumK is destructive on values in p.
+func SumK(p []float64, K int) float64 {
+	for K--; K > 0; K-- {
 		vecSum(p)
 	}
 	return Sum(p)
+}
+
+func SumKVert(p []float64, K int) float64 {
+	if len(p) < K {
+		K = len(p)
+	}
+	q := make([]float64, K-1)
+	i := 0
+	s := 0.
+	for i, s = range q {
+		for k, qk := range q[:i] {
+			q[k], s = TwoSum(qk, s)
+		}
+		q[i] = s
+	}
+	for _, α := range p[len(q):] {
+		for k, qk := range q {
+			q[k], α = TwoSum(qk, α)
+		}
+		s += α
+	}
+	for j, α := range q[:K-2] {
+		for k := j + 1; k < len(q); k++ {
+			q[k], α = TwoSum(q[k], α)
+		}
+		s += α
+	}
+	return s + q[K-2]
 }
 
 func Dot2(x, y []float64) float64 {
@@ -165,6 +199,63 @@ func Dot2Err(x, y []float64) (dot, eb float64) {
 	δ := n * eps / (1 - 2*n*eps)
 	α := eps*math.Abs(dot) + (δ*e + 3*eta/eps)
 	eb = α / (1 - 2*eps)
+	return
+}
+
+func DotK(x, y []float64, K int) float64 {
+	r := make([]float64, 2*len(x))
+	var p, h float64
+	p, r[0] = TwoProduct(x[0], y[0])
+	for i := 1; i < len(x); i++ {
+		h, r[i] = TwoProduct(x[i], y[i])
+		p, r[len(x)+i-1] = TwoSum(p, h)
+	}
+	r[2*len(x)-1] = p
+	return SumK(r, K-1)
+}
+
+func GenDot(n int, c float64) (x, y []float64, d, C float64) {
+	n2 := (n + 1) / 2
+	x = make([]float64, n)
+	y = make([]float64, n)
+
+	b := math.Log2(c)
+	fmt.Println("b:", b)
+	b2 := b / 2
+	e := make([]int, n2)
+	last := len(e) - 1
+	for i := 1; i < last; i++ {
+		e[i] = int(rand.Float64()*b2 + .5)
+	}
+	e[0] = int(b2+.5) + 1
+	e[last] = 0
+	fmt.Println("e:", e)
+	for i := 0; i < n2; i++ {
+		x[i] = math.Ldexp(rand.Float64()*2-1, e[i])
+		y[i] = math.Ldexp(rand.Float64()*2-1, e[i])
+	}
+	fmt.Println("First half:")
+	for i, xi := range x[:n2] {
+		fmt.Println(xi, y[i])
+	}
+
+	// DotExact.  Is this K reasonable for exact result?
+	fmt.Println("using K =", int(b/20), "for DotExact")
+	dx := func(x, y []float64) float64 { return DotK(x, y, int(b/20)) }
+
+	for i := n2; i < n; i++ {
+		x[i] = math.Ldexp(rand.Float64()*2-1, e[i-n2])
+		y[i] = (math.Ldexp(rand.Float64()*2-1, e[i-n2]) + dx(x, y)) / x[i]
+	}
+
+	for i := n - 1; i >= 1; i-- {
+		j := rand.Intn(i + 1)
+		x[i], x[j] = x[j], x[i]
+		y[i], y[j] = y[j], y[i]
+	}
+
+	d = dx(x, y)
+	C = CondDot(dx, x, y)
 	return
 }
 
