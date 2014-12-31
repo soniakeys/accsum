@@ -111,6 +111,22 @@ func ExampleDot2Err() {
 	// Dot2Err:                   1110223
 }
 
+func ExampleDotK() {
+	n := 4321
+	x := make([]float64, n+1)
+	for i := range x {
+		x[i] = float64(i)
+	}
+	x[0] = 1e11
+	fmt.Printf("Simple:    %.16e\n", accsum.Dot(x, x))
+	fmt.Printf("DotK(K=3): %.16e\n", accsum.DotK(x, x, 2))
+	fmt.Println("Square triangle:       ", n*(n+1)*(2*n+1)/6)
+	// Output:
+	// Simple:    1.0000000000026734e+22
+	// DotK(K=3): 1.0000000000026902e+22
+	// Square triangle:        26901858961
+}
+
 func ExampleAccSum() {
 	n := 54321
 	p := make([]float64, n+1)
