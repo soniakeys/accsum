@@ -220,7 +220,6 @@ func GenDot(n int, c float64) (x, y []float64, d, C float64) {
 	y = make([]float64, n)
 
 	b := math.Log2(c)
-	fmt.Println("b:", b)
 	b2 := b / 2
 	e := make([]int, n2)
 	last := len(e) - 1
@@ -229,23 +228,20 @@ func GenDot(n int, c float64) (x, y []float64, d, C float64) {
 	}
 	e[0] = int(b2+.5) + 1
 	e[last] = 0
-	fmt.Println("e:", e)
 	for i := 0; i < n2; i++ {
 		x[i] = math.Ldexp(rand.Float64()*2-1, e[i])
 		y[i] = math.Ldexp(rand.Float64()*2-1, e[i])
 	}
-	fmt.Println("First half:")
-	for i, xi := range x[:n2] {
-		fmt.Println(xi, y[i])
-	}
 
 	// DotExact.  Is this K reasonable for exact result?
-	fmt.Println("using K =", int(b/20), "for DotExact")
+	// fmt.Println("using K =", int(b/20), "for DotExact")
 	dx := func(x, y []float64) float64 { return DotK(x, y, int(b/20)) }
 
+	f := b2 / float64(n-1-n2)
 	for i := n2; i < n; i++ {
-		x[i] = math.Ldexp(rand.Float64()*2-1, e[i-n2])
-		y[i] = (math.Ldexp(rand.Float64()*2-1, e[i-n2]) + dx(x, y)) / x[i]
+		e2 := int(float64(n-1-i)*f + .5)
+		x[i] = math.Ldexp(rand.Float64()*2-1, e2)
+		y[i] = (math.Ldexp(rand.Float64()*2-1, e2) - dx(x, y)) / x[i]
 	}
 
 	for i := n - 1; i >= 1; i-- {
