@@ -48,6 +48,7 @@ var (
 // Dot2 (5.3)
 // Dot2Err (5.8)
 // DotK (5.10)
+// GenDot (6.1)
 
 // FastTwoSum computes an error-free sum of two float64s, with conditions on
 // the relative magnitudes.
@@ -255,13 +256,13 @@ func GenDot(n int, c float64) (x, y []float64, d, C float64) {
 	return
 }
 
-// nextPowerTwo returns the smallest power of 2 not less than abs(p).
+// Section:  Algorithms of "Accurate Floating-Point Summation, Part I:
+// Faithful Rounding", http://www.ti3.tu-harburg.de/paper/rump/RuOgOi07I.pdf
 //
-// Result is computed in 4 floating point operations.
-func nextPowerTwo(p float64) float64 {
-	q := invEps * p
-	return math.Abs(q - p - q)
-}
+// extractScalar (3.2)
+// extractSlice (3.4)
+// transform (4.1, 4.4)
+// AccSum (4.5)
 
 // extractScalar splits p relative to σ, which must be an integral power of 2.
 //
@@ -294,7 +295,37 @@ func extractSlice(σ float64, p []float64) (τ float64) {
 	return
 }
 
+// transform just as needed for AccSum, without bells and whistles.
 func transform(p []float64) (τ1, τ2 float64) {
+	return transform3(p, 0, _ΦSum)
+}
+
+// AccSum returns an accurate sum of values in p.
+//
+// AccSum is destructive on p.
+//
+// Result is a faithful rounding of the sum of values in p.
+func AccSum(p []float64) float64 {
+	τ1, τ2 := transform(p)
+	sum := 0.
+	for _, pi := range p { // order not important
+		sum += pi
+	}
+	return sum + τ2 + τ1 // order important
+}
+
+// Section:  Algorithms of "Accurate Floating-Point Summation, Part II:
+// Faithful Rounding", http://www.ti3.tu-harburg.de/paper/rump/RuOgOi07II.pdf
+//
+// transform3 (3.3)
+// AccSign (4.1)
+// transformK (6.2)
+
+// suitable values for argument Φ in transform3
+func _ΦSum(Ms float64) float64  { return u * Ms * Ms }
+func _ΦSign(Ms float64) float64 { return u * Ms }
+
+func transform3(p []float64, ρ float64, Φ func(Ms float64) float64) (τ1, τ2 float64) {
 	if len(p) == 0 {
 		return
 	}
@@ -312,10 +343,9 @@ func transform(p []float64) (τ1, τ2 float64) {
 	if math.IsInf(σ, 0) {
 		return σ, σ
 	}
-	ϕ := Ms * u  // "factor to decrease σ"
-	_Φ := Ms * ϕ // "stopping criterion"
-
-	for t := 0.; ; {
+	ϕ := Ms * u // "factor to decrease σ"
+	_Φ := Φ(Ms) // "stopping criterion"
+	for t := ρ; ; {
 		τ := extractSlice(σ, p)
 		τ1 := t + τ
 		if math.Abs(τ1) >= _Φ*σ || σ <= minPos {
@@ -323,24 +353,39 @@ func transform(p []float64) (τ1, τ2 float64) {
 		}
 		t = τ1
 		if t == 0 {
-			return transform(p)
+			return transform3(p, 0, Φ)
 		}
 		σ *= ϕ
 	}
 }
 
-// AccSum returns an accurate sum of values in p.
-//
-// AccSum is destructive on p.
-//
-// Result is a faithful rounding of the sum of values in p.
-func AccSum(p []float64) float64 {
-	τ1, τ2 := transform(p)
+func AccSignBit(p []float64) bool {
+	τ1, _ := transform3(p, 0, _ΦSign)
+	return math.Signbit(τ1)
+}
+
+func transformK(p []float64, ρ float64) (res, R float64) {
+	// code similar to AccSum
+	τ1, τ2 := transform3(p, ρ, _ΦSum)
 	sum := 0.
-	for _, pi := range p { // order not important
+	for _, pi := range p {
 		sum += pi
 	}
-	return sum + τ2 + τ1 // order important
+	res = sum + τ2 + τ1 // same as AccSum result
+	R = τ2 - (res - τ1)
+	return
+}
+
+func AccSumK(p []float64, K int) []float64 {
+	res := make([]float64, K)
+	r := 0.
+	for k := range res {
+		res[k], r = transformK(p, r)
+		if res[k] <= minPos {
+			break
+		}
+	}
+	return res
 }
 
 // PrecSum returns an accurate sum of values in p.
@@ -410,4 +455,12 @@ func PrecSum(p []float64, K int) float64 {
 		e += q
 	}
 	return sum + e + π
+}
+
+// nextPowerTwo returns the smallest power of 2 not less than abs(p).
+//
+// Result is computed in 4 floating point operations.
+func nextPowerTwo(p float64) float64 {
+	q := invEps * p
+	return math.Abs(q - p - q)
 }
