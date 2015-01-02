@@ -188,24 +188,13 @@ func ExampleAccSum() {
 	// Triangle:             1475412681
 }
 
-/*
 func ExampleAccSumK() {
-	n := 54321
-	p := make([]float64, n+1)
-	for i := range p {
-		p[i] = float64(i)
-	}
-	p[0] = 1e20
-	fmt.Printf("Simple:    %.16e\n", accsum.Sum(p))
+	p := []float64{1e20, 1, 1, 1e20}
 	r := accsum.AccSumK(p, 2)
-	fmt.Printf("AccSumK:   %.16e + %g\n", r[0], r[1])
-	fmt.Println("Triangle:             ", n*(n+1)/2)
+	fmt.Println(r[0], "+",  r[1])
 	// Output:
-	// Simple:   1.0000000000146203e+20
-	// AccSum:   1.0000000000147541e+20 + 2681
-	// Triangle:             1475412681
+	// 2e+20 + 2
 }
-*/
 
 /* fails.  don't know why
 func ExampleAccSignBit() {
