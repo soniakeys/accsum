@@ -191,7 +191,7 @@ func ExampleAccSum() {
 func ExampleAccSumK() {
 	p := []float64{1e20, 1, 1, 1e20}
 	r := accsum.AccSumK(p, 2)
-	fmt.Println(r[0], "+",  r[1])
+	fmt.Println(r[0], "+", r[1])
 	// Output:
 	// 2e+20 + 2
 }

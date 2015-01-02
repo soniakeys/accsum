@@ -400,6 +400,9 @@ func transformK(p []float64, ρ float64) (res, R float64) {
 	return
 }
 
+// AccSumK returns a sum in K-fold precision.
+//
+// AccSumK is destructive on values in p.
 func AccSumK(p []float64, K int) []float64 {
 	res := make([]float64, K)
 	r := 0.
