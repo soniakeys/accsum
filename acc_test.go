@@ -5,6 +5,8 @@ package accsum_test
 
 import (
 	"fmt"
+	//	"math"
+	"math/rand"
 
 	"github.com/soniakeys/accsum"
 )
@@ -76,6 +78,22 @@ func ExampleSumK() {
 	// Triangle:             1475412681
 }
 
+func ExampleSumKVert() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	fmt.Printf("Simple:   %.16e\n", accsum.Sum(p))
+	fmt.Printf("SumKVert: %.16e\n", accsum.SumKVert(p, 2))
+	fmt.Println("Triangle:            ", n*(n+1)/2)
+	// Output:
+	// Simple:   1.0000000000146203e+20
+	// SumKVert: 1.0000000000147541e+20
+	// Triangle:             1475412681
+}
+
 func ExampleDot2() {
 	n := 4321
 	x := make([]float64, n+1)
@@ -127,6 +145,33 @@ func ExampleDotK() {
 	// Square triangle:        26901858961
 }
 
+func ExampleGenDot() {
+	rand.Seed(42)
+	x, y, d, c := accsum.GenDot(6, 1e31)
+	fmt.Println("+x          y")
+	for i, xi := range x {
+		fmt.Printf("%+.2e  %+.2e\n", xi, y[i])
+	}
+	fmt.Println()
+	fmt.Printf("condition:  %.2e\n", c)
+	fmt.Printf("dot exact: % .6f\n", d)
+	fmt.Printf("Dot2(x,y): % .6f\n", accsum.Dot2(x, y))
+	fmt.Printf("Dot(x,y):  % .2e\n", accsum.Dot(x, y))
+	// Output:
+	// +x          y
+	// -3.91e+15  +9.38e+14
+	// -5.20e+14  -7.04e+15
+	// -5.64e-01  +5.61e+07
+	// -3.05e+05  -4.78e+05
+	// -2.34e-01  +6.26e-01
+	// +1.96e+07  +4.90e+07
+	//
+	// condition:  5.30e+31
+	// dot exact: -0.276634
+	// Dot2(x,y): -0.250000
+	// Dot(x,y):   3.99e+14
+}
+
 func ExampleAccSum() {
 	n := 54321
 	p := make([]float64, n+1)
@@ -142,6 +187,46 @@ func ExampleAccSum() {
 	// AccSum:   1.0000000000147541e+20
 	// Triangle:             1475412681
 }
+
+/*
+func ExampleAccSumK() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	fmt.Printf("Simple:    %.16e\n", accsum.Sum(p))
+	r := accsum.AccSumK(p, 2)
+	fmt.Printf("AccSumK:   %.16e + %g\n", r[0], r[1])
+	fmt.Println("Triangle:             ", n*(n+1)/2)
+	// Output:
+	// Simple:   1.0000000000146203e+20
+	// AccSum:   1.0000000000147541e+20 + 2681
+	// Triangle:             1475412681
+}
+*/
+
+/* fails.  don't know why
+func ExampleAccSignBit() {
+	fmt.Println("0  negative:    ", math.Signbit(0))
+	fmt.Println("-1 negative:    ", math.Signbit(-1))
+	fmt.Println("AccSignBit 0:   ", accsum.AccSignBit([]float64{0}))
+	fmt.Println("AccSignBit -1:  ", accsum.AccSignBit([]float64{-1}))
+	p := []float64{1e20, -1, -1e20}
+	fmt.Println("Signbit(Sum(p)):", math.Signbit(accsum.Sum(p)))
+	p = []float64{1e20, -1, -1e20}
+	fmt.Println("AccSignBit(p):  ", accsum.AccSignBit(p))
+	fmt.Println("p after AccSignBit:", p)
+	// Output:
+	// 0  negative:     false
+	// -1 negative:     true
+	// AccSignBit 0:    false
+	// AccSignBit -1:   true
+	// Signbit(Sum(p)): false
+	// AccSignBit(p):   true
+}
+*/
 
 func ExamplePrecSum() {
 	n := 54321

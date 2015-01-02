@@ -142,19 +142,22 @@ func SumK(p []float64, K int) float64 {
 	return Sum(p)
 }
 
+// SumK returns a sum of values in p, as if computed in k-fold precision of
+// a float64.
+//
+// SumKVert computes the same result as SumK but leaves values in p unmodified.
 func SumKVert(p []float64, K int) float64 {
 	if len(p) < K {
 		K = len(p)
 	}
 	q := make([]float64, K-1)
-	i := 0
-	s := 0.
-	for i, s = range q {
+	for i, s := range p[:len(q)] {
 		for k, qk := range q[:i] {
 			q[k], s = TwoSum(qk, s)
 		}
 		q[i] = s
 	}
+	s := 0. // Unclear from the paper, but this seems right.
 	for _, α := range p[len(q):] {
 		for k, qk := range q {
 			q[k], α = TwoSum(qk, α)
@@ -170,6 +173,8 @@ func SumKVert(p []float64, K int) float64 {
 	return s + q[K-2]
 }
 
+// Dot2 returns a dot product of x and y as if computed in twice the precision
+// of a float64.
 func Dot2(x, y []float64) float64 {
 	if len(x) == 0 {
 		return 0
@@ -184,6 +189,10 @@ func Dot2(x, y []float64) float64 {
 	return p + s
 }
 
+// Dot2 returs a dot product and an error bound.
+//
+// The result dot is the same 2-fold precision result returned by Dot2,
+// the result eb is a rigorous error bound.
 func Dot2Err(x, y []float64) (dot, eb float64) {
 	p, s := TwoProduct(x[0], y[0])
 	e := math.Abs(s)
@@ -203,6 +212,8 @@ func Dot2Err(x, y []float64) (dot, eb float64) {
 	return
 }
 
+// DotK returns a dot product of x and y as if computed in K times the
+// precision of a float64.
 func DotK(x, y []float64, K int) float64 {
 	r := make([]float64, 2*len(x))
 	var p, h float64
@@ -215,6 +226,16 @@ func DotK(x, y []float64, K int) float64 {
 	return SumK(r, K-1)
 }
 
+// GenDot generates vectors x and y ill-conditioned for dot product.
+//
+// Argument n specifies length of result vectors x and y, argument c
+// specifies the approximate condition number for a dot product of x and y.
+//
+// Result d is a computed dot product that is exact or nearly exact,
+// result C is the computed number.
+//
+// GenDot uses the rand package default generator, use rand.Seed as needed
+// before calling GenDot.
 func GenDot(n int, c float64) (x, y []float64, d, C float64) {
 	n2 := (n + 1) / 2
 	x = make([]float64, n)
@@ -347,9 +368,10 @@ func transform3(p []float64, ρ float64, Φ func(Ms float64) float64) (τ1, τ2 
 	_Φ := Φ(Ms) // "stopping criterion"
 	for t := ρ; ; {
 		τ := extractSlice(σ, p)
-		τ1 := t + τ
+		τ1 = t + τ
 		if math.Abs(τ1) >= _Φ*σ || σ <= minPos {
-			return FastTwoSum(t, τ)
+			τ2 = t - τ1 + τ
+			return
 		}
 		t = τ1
 		if t == 0 {
@@ -359,6 +381,8 @@ func transform3(p []float64, ρ float64, Φ func(Ms float64) float64) (τ1, τ2 
 	}
 }
 
+// AccSignBit returns the sign bit of the sum of values in p, somewhat faster
+// than an accurate sum can be computed.
 func AccSignBit(p []float64) bool {
 	τ1, _ := transform3(p, 0, _ΦSign)
 	return math.Signbit(τ1)
