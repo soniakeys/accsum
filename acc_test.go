@@ -5,7 +5,7 @@ package accsum_test
 
 import (
 	"fmt"
-	//	"math"
+	"math"
 	"math/rand"
 
 	"github.com/soniakeys/accsum"
@@ -217,6 +217,38 @@ func ExampleAccSignBit() {
 }
 */
 
+func ExampleDownSum() {
+	n := 12345
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e19
+	u := accsum.DownSum(p)
+	fmt.Println("Triangle:               ", n*(n+1)/2)
+	fmt.Printf("DownSum:    %.16e\n", u)
+	fmt.Printf("Next above: %.16e\n\n", math.Nextafter(u, math.Inf(1)))
+
+	n = 54321
+	p = make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	u = accsum.DownSum(p)
+	fmt.Println("Triangle:              ", n*(n+1)/2)
+	fmt.Printf("DownSum:    %.16e\n", u)
+	fmt.Printf("Next above: %.16e\n", math.Nextafter(u, math.Inf(1)))
+	// Output:
+	// Triangle:                76205685
+	// DownSum:    1.0000000000076204e+19
+	// Next above: 1.0000000000076206e+19
+	//
+	// Triangle:               1475412681
+	// DownSum:    1.0000000000147541e+20
+	// Next above: 1.0000000000147543e+20
+}
+
 func ExamplePrecSum() {
 	n := 54321
 	p := make([]float64, n+1)
@@ -235,4 +267,36 @@ func ExamplePrecSum() {
 	// Simple:   1.0000000000146203e+20
 	// PrecSum:  1.0000000000147541e+20
 	// Triangle:             1475412681
+}
+
+func ExampleUpSum() {
+	n := 12345
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e19
+	u := accsum.UpSum(p)
+	fmt.Println("Triangle:               ", n*(n+1)/2)
+	fmt.Printf("UpSum:      %.16e\n", u)
+	fmt.Printf("Next lower: %.16e\n\n", math.Nextafter(u, math.Inf(-1)))
+
+	n = 54321
+	p = make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	u = accsum.UpSum(p)
+	fmt.Println("Triangle:              ", n*(n+1)/2)
+	fmt.Printf("UpSum:      %.16e\n", u)
+	fmt.Printf("Next lower: %.16e\n", math.Nextafter(u, math.Inf(-1)))
+	// Output:
+	// Triangle:                76205685
+	// UpSum:      1.0000000000076206e+19
+	// Next lower: 1.0000000000076204e+19
+	//
+	// Triangle:               1475412681
+	// UpSum:      1.0000000000147543e+20
+	// Next lower: 1.0000000000147541e+20
 }

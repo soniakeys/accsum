@@ -341,6 +341,8 @@ func AccSum(p []float64) float64 {
 // transform3 (3.3)
 // AccSign (4.1)
 // transformK (6.2)
+// AccSumK (6.4)
+// DownSum, UpSum (7.1)
 
 // suitable values for argument Φ in transform3
 func _ΦSum(Ms float64) float64  { return u * Ms * Ms }
@@ -411,6 +413,26 @@ func AccSumK(p []float64, K int) []float64 {
 		if res[k] <= minPos {
 			break
 		}
+	}
+	return res
+}
+
+// DownSum returns an accurate sum of values in p, rounded down to the nearest
+// float64.
+func DownSum(p []float64) float64 {
+	res, r := transformK(p, 0)
+	if δ, _ := transformK(p, r); δ < 0 {
+		return math.Nextafter(res, math.Inf(-1))
+	}
+	return res
+}
+
+// UpSum returns an accurate sum of values in p, rounded up to the nearest
+// float64.
+func UpSum(p []float64) float64 {
+	res, r := transformK(p, 0)
+	if δ, _ := transformK(p, r); δ > 0 {
+		return math.Nextafter(res, math.Inf(1))
 	}
 	return res
 }
