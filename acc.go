@@ -343,6 +343,7 @@ func AccSum(p []float64) float64 {
 // transformK (6.2)
 // AccSumK (6.4)
 // DownSum, UpSum (7.1)
+// NearSum (7.4)
 
 // suitable values for argument Φ in transform3
 func _ΦSum(Ms float64) float64  { return u * Ms * Ms }
@@ -435,6 +436,39 @@ func UpSum(p []float64) float64 {
 		return math.Nextafter(res, math.Inf(1))
 	}
 	return res
+}
+
+// NearSum returns an accurate sum of values in p, rounded to the nearest
+// float64.
+func NearSum(p []float64) float64 {
+	τ1, τ2 := transform(p)
+	τ2ʹ := τ2 + Sum(p)
+	res, δ := FastTwoSum(τ1, τ2ʹ)
+	if δ == 0 {
+		return res
+	}
+	R := τ2 - (res - τ1)
+	// modification from paper and reference code:  repurpose δ
+	// so that code for the two cases of δ can be folded together.
+	if δ < 0 {
+		δ = -1
+	} else {
+		δ = 1
+	}
+	res2 := math.Nextafter(res, math.Inf(int(δ)))
+	γ := res2 - res
+	if γ == δ*eta {
+		return res
+	}
+	δʹ := γ / 2
+	δʺ, _ := transformK(p, R-δʹ)
+	switch δʺ *= δ; {
+	case δʺ < 0:
+		return res
+	case δʺ > 0:
+		return res2
+	}
+	return res + δʹ
 }
 
 // PrecSum returns an accurate sum of values in p.

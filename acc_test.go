@@ -180,6 +180,34 @@ func ExampleGenDot() {
 	// Dot(x,y):   3.99e+14
 }
 
+func ExampleNearSum() {
+	n := 12345
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e19
+	u := accsum.NearSum(p)
+	fmt.Println("Triangle:               ", n*(n+1)/2)
+	fmt.Printf("NearSum:    %.16e\n\n", u)
+
+	n = 54321
+	p = make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	u = accsum.NearSum(p)
+	fmt.Println("Triangle:              ", n*(n+1)/2)
+	fmt.Printf("NearSum:    %.16e\n", u)
+	// Output:
+	// Triangle:                76205685
+	// NearSum:    1.0000000000076206e+19
+	//
+	// Triangle:               1475412681
+	// NearSum:    1.0000000000147541e+20
+}
+
 func ExamplePrecSum() {
 	n := 54321
 	p := make([]float64, n+1)
