@@ -61,6 +61,22 @@ func ExampleKahanB() {
 	// Triangle:             1475412681
 }
 
+func ExamplePairSum() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	fmt.Printf("Simple:   %.16e\n", accsum.Sum(p))
+	fmt.Printf("PairSum:  %.16e\n", accsum.PriestSum(p))
+	fmt.Println("Triangle:            ", n*(n+1)/2)
+	// Output:
+	// Simple:   1.0000000000146203e+20
+	// PairSum:  1.0000000000147541e+20
+	// Triangle:             1475412681
+}
+
 func ExamplePriestSum() {
 	n := 54321
 	p := make([]float64, n+1)

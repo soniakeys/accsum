@@ -24,6 +24,22 @@ func Sum(p []float64) (sum float64) {
 	return
 }
 
+// PairSum returns a sum of the values in p.
+func PairSum(p []float64) float64 {
+	if len(p) == 0 {
+		return 0
+	}
+	return ps2(p)
+}
+
+func ps2(p []float64) float64 {
+	if len(p) == 1 {
+		return p[0]
+	}
+	m := len(p) / 2
+	return ps2(p[:m]) + ps2(p[m:])
+}
+
 // XSum returns a sum of the values in p.
 //
 // The algorithm is "XBLAS quadruple precision summantion."
