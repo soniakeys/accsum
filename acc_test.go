@@ -48,6 +48,22 @@ func ExampleAccSum() {
 	// Triangle:             1475412681
 }
 
+func ExampleAccSumHuge() {
+	n := 54321
+	p := make([]float64, n+1)
+	for i := range p {
+		p[i] = float64(i)
+	}
+	p[0] = 1e20
+	fmt.Printf("Simple:     %.16e\n", accsum.Sum(p))
+	fmt.Printf("AccSumHuge: %.16e\n", accsum.AccSumHuge(p))
+	fmt.Println("Triangle:              ", n*(n+1)/2)
+	// Output:
+	// Simple:     1.0000000000146203e+20
+	// AccSumHuge: 1.0000000000147541e+20
+	// Triangle:               1475412681
+}
+
 func ExampleAccSumK() {
 	p := []float64{1e20, 1, 1, 1e20}
 	r := accsum.AccSumK(p, 2)

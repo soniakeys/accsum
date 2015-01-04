@@ -307,7 +307,7 @@ func extractScalar(σ, p float64) (q, pʹ float64) {
 // sum of the original elements of p.
 //
 // 4 * len(p) floating point operations.
-func extractSlice(σ float64, p []float64) (τ float64) {
+func extractSlice(p []float64, σ float64) (τ float64) {
 	var q float64
 	for i, pi := range p {
 		q, p[i] = extractScalar(σ, pi)
@@ -318,7 +318,8 @@ func extractSlice(σ float64, p []float64) (τ float64) {
 
 // transform just as needed for AccSum, without bells and whistles.
 func transform(p []float64) (τ1, τ2 float64) {
-	return transform3(p, 0, _ΦSum)
+	τ1, τ2, _, _ = transform3(p, 0, _ΦSum)
+	return
 }
 
 // AccSum returns an accurate sum of values in p.
@@ -328,11 +329,7 @@ func transform(p []float64) (τ1, τ2 float64) {
 // Result is a faithful rounding of the sum of values in p.
 func AccSum(p []float64) float64 {
 	τ1, τ2 := transform(p)
-	sum := 0.
-	for _, pi := range p { // order not important
-		sum += pi
-	}
-	return sum + τ2 + τ1 // order important
+	return Sum(p) + τ2 + τ1
 }
 
 // Section:  Algorithms of "Accurate Floating-Point Summation, Part II:
@@ -344,12 +341,14 @@ func AccSum(p []float64) float64 {
 // AccSumK (6.4)
 // DownSum, UpSum (7.1)
 // NearSum (7.4)
+// AccSumHuge (8.1)
 
 // suitable values for argument Φ in transform3
 func _ΦSum(Ms float64) float64  { return u * Ms * Ms }
+func _ΦHuge(Ms float64) float64 { return u * Ms * 8 }
 func _ΦSign(Ms float64) float64 { return u * Ms }
 
-func transform3(p []float64, ρ float64, Φ func(Ms float64) float64) (τ1, τ2 float64) {
+func transform3(p []float64, ρ float64, Φ func(Ms float64) float64) (τ1, τ2, σ, Ms float64) {
 	if len(p) == 0 {
 		return
 	}
@@ -362,15 +361,15 @@ func transform3(p []float64, ρ float64, Φ func(Ms float64) float64) (τ1, τ2 
 	if μ == 0 {
 		return
 	}
-	Ms := nextPowerTwo(float64(len(p) + 2))
-	σ := Ms * nextPowerTwo(μ) // "extraction unit"
+	Ms = nextPowerTwo(float64(len(p) + 2))
+	σ = Ms * nextPowerTwo(μ) // "extraction unit"
 	if math.IsInf(σ, 0) {
-		return σ, σ
+		return σ, σ, σ, Ms
 	}
 	ϕ := Ms * u // "factor to decrease σ"
 	_Φ := Φ(Ms) // "stopping criterion"
 	for t := ρ; ; {
-		τ := extractSlice(σ, p)
+		τ := extractSlice(p, σ)
 		τ1 = t + τ
 		if math.Abs(τ1) >= _Φ*σ || σ <= minPos {
 			τ2 = t - τ1 + τ
@@ -387,18 +386,14 @@ func transform3(p []float64, ρ float64, Φ func(Ms float64) float64) (τ1, τ2 
 // AccSignBit returns the sign bit of the sum of values in p, somewhat faster
 // than an accurate sum can be computed.
 func AccSignBit(p []float64) bool {
-	τ1, _ := transform3(p, 0, _ΦSign)
+	τ1, _, _, _ := transform3(p, 0, _ΦSign)
 	return math.Signbit(τ1)
 }
 
 func transformK(p []float64, ρ float64) (res, R float64) {
 	// code similar to AccSum
-	τ1, τ2 := transform3(p, ρ, _ΦSum)
-	sum := 0.
-	for _, pi := range p {
-		sum += pi
-	}
-	res = sum + τ2 + τ1 // same as AccSum result
+	τ1, τ2, _, _ := transform3(p, ρ, _ΦSum)
+	res = Sum(p) + τ2 + τ1 // same as AccSum result
 	R = τ2 - (res - τ1)
 	return
 }
@@ -469,6 +464,24 @@ func NearSum(p []float64) float64 {
 		return res2
 	}
 	return res + δʹ
+}
+
+func AccSumHuge(p []float64) float64 {
+	τ1, τ2, σ, Ms := transform3(p, 0, _ΦHuge)
+	if σ <= minPos {
+		return τ1
+	}
+	var τ [16]float64
+	ϕ := Ms * u
+	factor := 2 * Ms * ϕ
+	for k := len(τ) - 1; k >= 0; k-- {
+		σ *= ϕ
+		τ[k] = extractSlice(p, σ)
+		if factor*σ <= math.Abs(τ1) || σ <= minPos {
+			break
+		}
+	}
+	return τ2 + Sum(p) + Sum(τ[:]) + τ1
 }
 
 // PrecSum returns an accurate sum of values in p.

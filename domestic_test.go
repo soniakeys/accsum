@@ -75,7 +75,7 @@ want:    %g, %g`, tc.exp, gotQ, gotPʹ, tc.q, tc.pʹ)
 func TestExtractSlice(t *testing.T) {
 	p := []float64{1, 22, 333}
 	exp := 60
-	τGot := extractSlice(math.Ldexp(1, exp), p)
+	τGot := extractSlice(p, math.Ldexp(1, exp))
 	τWant := 256.
 	pWant := []float64{1, 22, 77}
 	if τGot != τWant || !reflect.DeepEqual(p, pWant) {
